@@ -17,7 +17,8 @@ app.listen(PORT, () => {
 })
 
 app.get("/", (req, res) => {
-  res.send("API 🆗");
+  res.send(document("https://raw.githubusercontent.com/lgalant/web-demo-4to/master/index.html"));
+  console.log("API 🆗.");
 })
 
 app.get("/canciones/*", async (req, res) => {
