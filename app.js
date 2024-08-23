@@ -20,7 +20,7 @@ app.get("/", (req, res) => {
   res.send(`API 🆗`);
 })
 
-app.get("/canciones/*", async (req, res) => {
+app.get("/canciones", async (req, res) => {
   console.log("Trayendo todas las canciones...");
   const client = new Client(config);
   await client.connect();
