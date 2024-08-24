@@ -21,10 +21,21 @@ app.get("/", (req, res) => {
 })
 
 app.get("/canciones", async (req, res) => {
-  console.log("Trayendo todas las canciones...");
+  console.log("Enviando todas las canciones...");
+  const qry = `SELECT canciones.id, canciones.nombre, 
+  artistas.nombre AS nombre_artista, albumes.nombre AS 
+  nombre_album, canciones.duracion, canciones.reproducciones
+
+  FROM canciones
+
+  JOIN albumes ON canciones.album = albumes.id
+  JOIN artistas ON albumes.artista = artistas.id
+  
+  WHERE canciones.id = ?;`;
+
   const client = new Client(config);
   await client.connect();
-  const result = await client.query("SELECT * FROM public.canciones");
+  const result = await client.query(qry);
   await client.end();
   res.send(result.rows);
 })
