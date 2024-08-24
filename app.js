@@ -32,7 +32,7 @@ app.get("/canciones", async (req, res) => {
     JOIN public.albumes ON public.canciones.album = public.albumes.id
     JOIN public.artistas ON public.albumes.artista = artistas.id
     
-    WHERE canciones.id = ?;`;
+    WHERE public.canciones.id = ?;`;
   
     const client = new Client(config);
     await client.connect();
