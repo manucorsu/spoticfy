@@ -22,9 +22,9 @@ app.get("/", (req, res) => {
 
 app.get("/canciones", async (req, res) => {
   console.log("Enviando todas las canciones...");
-  const qry = `SELECT canciones.id, canciones.nombre, 
-  artistas.nombre AS nombre_artista, albumes.nombre AS 
-  nombre_album, canciones.duracion, canciones.reproducciones
+  const qry = `SELECT public.canciones.id, public.canciones.nombre, 
+  public.artistas.nombre AS artista, albumes.nombre AS 
+  album, canciones.duracion, canciones.reproducciones
 
   FROM canciones
 
