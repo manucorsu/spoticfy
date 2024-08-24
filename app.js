@@ -21,8 +21,14 @@ app.get("/", (req, res) => {
 app.get("/canciones", async (req, res) => {
   try {
     console.log("Enviando todas las canciones...");
-    const qry = `SELECT * FROM 
-    public.canciones;`;
+    const qry = `SELECT public.canciones.nombre, 
+    public.artistas.nombre AS artista, public.albumes.nombre AS album,
+    public.canciones.duracion, public.canciones.reproducciones
+    
+    FROM public.canciones
+    
+    JOIN public.albumes ON public.canciones.album = public.albumes.id
+    JOIN public.artistas ON public.albumes.artista = public.artistas.id`; //flashbacks de tp4
 
     const client = new Client(config);
     await client.connect();
