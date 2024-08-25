@@ -18,7 +18,7 @@ app.get("/", (req, res) => {
   res.send(`API 🆗`);
 });
 
-app.get("/canciones", async (req, res) => {
+app.get("/canciones/*", async (req, res) => {
   try {
     console.log("Enviando todas las canciones...");
     const qry = `
@@ -42,7 +42,7 @@ app.get("/canciones", async (req, res) => {
   }
 });
 
-app.get("/albumes", async (req, res) => {
+app.get("/albumes/*", async (req, res) => {
   try {
     console.log("Enviando todos los álbumes...");
     const qry = `
@@ -61,7 +61,7 @@ app.get("/albumes", async (req, res) => {
   }
 });
 
-app.get("/artistas", async (req, res) => {
+app.get("/artistas/*", async (req, res) => {
   try {
     console.log("Enviando todos los artistas...");
     const qry = "SELECT public.artistas.nombre FROM public.artistas;";
