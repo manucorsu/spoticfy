@@ -65,7 +65,7 @@ app.get("/albumes/:searchTxt", async (req, res) => {
   }
 });
 
-app.get("/artistas/*", async (req, res) => {
+app.get("/artistas/:searchTxt", async (req, res) => {
   try {
     const searchTxt = req.params.searchTxt;
     let qry = "SELECT public.artistas.nombre FROM public.artistas";
