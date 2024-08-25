@@ -32,7 +32,7 @@ app.get("/canciones/:searchTxt", async (req, res) => {
     JOIN public.artistas ON public.albumes.artista = public.artistas.id
     `; //flashbacks de tp4
     if (searchTxt != "*") {
-      qry += ` WHERE public.canciones.nombre = "${searchTxt};`;
+      qry += ` WHERE public.canciones.nombre = "${searchTxt}";`;
     }
     const client = new Client(config);
     await client.connect();
@@ -53,7 +53,7 @@ app.get("/albumes/:searchTxt", async (req, res) => {
     JOIN public.artistas ON public.artistas.id = public.albumes.artista
     `;
     if (searchTxt != "*") {
-      qry += ` WHERE public.albumes.nombre = "${searchTxt};`;
+      qry += ` WHERE public.albumes.nombre = "${searchTxt}";`;
     }
     const client = new Client(config);
     await client.connect();
@@ -70,7 +70,7 @@ app.get("/artistas/:searchTxt", async (req, res) => {
     const searchTxt = req.params.searchTxt;
     let qry = "SELECT public.artistas.nombre FROM public.artistas";
     if (searchTxt != "*") {
-      qry += ` WHERE public.artistas.nombre = "${searchTxt};`;
+      qry += ` WHERE public.artistas.nombre = "${searchTxt}";`;
     }
     const client = new Client(config);
     await client.connect();
