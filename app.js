@@ -18,10 +18,10 @@ app.get("/", (req, res) => {
   res.send(`API 🆗`);
 });
 
-app.get("/canciones/*", async (req, res) => {
+app.get("/canciones/:searchTxt", async (req, res) => {
   try {
-    console.log("Enviando todas las canciones...");
-    const qry = `
+    const searchTxt = req.params.searchTxt;
+    let qry = `
     SELECT public.canciones.nombre, 
     public.artistas.nombre AS artista, public.albumes.nombre AS album,
     public.canciones.duracion, public.canciones.reproducciones
@@ -29,9 +29,11 @@ app.get("/canciones/*", async (req, res) => {
     FROM public.canciones
     
     JOIN public.albumes ON public.canciones.album = public.albumes.id
-    JOIN public.artistas ON public.albumes.artista = public.artistas.id;
+    JOIN public.artistas ON public.albumes.artista = public.artistas.id
     `; //flashbacks de tp4
-
+    if (searchTxt != "*") {
+      qry += ` WHERE public.canciones.nombre = "${searchTxt};`;
+    }
     const client = new Client(config);
     await client.connect();
     const result = await client.query(qry);
@@ -42,15 +44,17 @@ app.get("/canciones/*", async (req, res) => {
   }
 });
 
-app.get("/albumes/*", async (req, res) => {
+app.get("/albumes/:searchTxt", async (req, res) => {
   try {
-    console.log("Enviando todos los álbumes...");
-    const qry = `
+    const searchTxt = req.params.searchTxt;
+    let qry = `
     SELECT public.albumes.nombre, public.artistas.nombre AS artista 
     FROM public.albumes 
-    JOIN public.artistas ON public.artistas.id = public.albumes.artista;
+    JOIN public.artistas ON public.artistas.id = public.albumes.artista
     `;
-
+    if (searchTxt != "*") {
+      qry += ` WHERE public.albumes.nombre = "${searchTxt};`;
+    }
     const client = new Client(config);
     await client.connect();
     const result = await client.query(qry);
@@ -63,9 +67,10 @@ app.get("/albumes/*", async (req, res) => {
 
 app.get("/artistas/*", async (req, res) => {
   try {
-    console.log("Enviando todos los artistas...");
-    const qry = "SELECT public.artistas.nombre FROM public.artistas;";
-
+    let qry = "SELECT public.artistas.nombre FROM public.artistas";
+    if (searchTxt != "*") {
+      qry += ` WHERE public.artistas.nombre = "${searchTxt};`;
+    }
     const client = new Client(config);
     await client.connect();
     const result = await client.query(qry);
