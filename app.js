@@ -22,7 +22,7 @@ app.get("/canciones/:searchTxt", async (req, res) => {
   try {
     const searchTxt = req.params.searchTxt;
     let qry = `
-    SELECT public.canciones.nombre, 
+    SELECT public.canciones.id, public.canciones.nombre, 
     public.artistas.nombre AS artista, public.albumes.nombre AS album,
     public.canciones.duracion, public.canciones.reproducciones
     
@@ -48,7 +48,7 @@ app.get("/albumes/:searchTxt", async (req, res) => {
   try {
     const searchTxt = req.params.searchTxt;
     let qry = `
-    SELECT public.albumes.nombre, public.artistas.nombre AS artista 
+    SELECT public.albumes.id, public.albumes.nombre, public.artistas.nombre AS artista 
     FROM public.albumes 
     JOIN public.artistas ON public.artistas.id = public.albumes.artista
     `;
@@ -68,7 +68,7 @@ app.get("/albumes/:searchTxt", async (req, res) => {
 app.get("/artistas/:searchTxt", async (req, res) => {
   try {
     const searchTxt = req.params.searchTxt;
-    let qry = "SELECT public.artistas.nombre FROM public.artistas";
+    let qry = "SELECT public.artistas.id, public.artistas.nombre FROM public.artistas";
     if (searchTxt != "*") {
       qry += ` WHERE public.artistas.nombre = '${searchTxt}';`;
     }
