@@ -68,13 +68,30 @@ app.get("/albumes/:searchTxt", async (req, res) => {
 app.get("/artistas/:searchTxt", async (req, res) => {
   try {
     const searchTxt = req.params.searchTxt;
-    let qry = "SELECT public.artistas.id, public.artistas.nombre FROM public.artistas";
+    let qry =
+      "SELECT public.artistas.id, public.artistas.nombre FROM public.artistas";
     if (searchTxt != "*") {
-      qry += ` WHERE public.artistas.nombre = '${searchTxt}';`;
+      qry += ` WHERE public.artistas.nombre = '${searchTxt}';`; //esto está mal había que usar $ y recién me entero.
     }
     const client = new Client(config);
     await client.connect();
     const result = await client.query(qry);
+    await client.end();
+    res.send(result.rows);
+  } catch (ex) {
+    console.error(ex);
+  }
+});
+
+app.post("/usuarios/", async (req, res) => {
+  try {
+    const client = new Client(config);
+    await client.connect();
+    let usuario = req.body;
+    let result = await client.query(
+      "INSERT INTO Usuarios (userid, email, nombre, password) VALUES ($1, $2, $3, $4)",
+      [usuario.userid, usuario.email, usuario.nombre, usuario.password]
+    );
     await client.end();
     res.send(result.rows);
   } catch (ex) {
