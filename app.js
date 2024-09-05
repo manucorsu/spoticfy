@@ -106,6 +106,7 @@ app.post("/login/", async (req, res) => {
   const usuario_db = result.rows[0];
   const hashed = usuario_db.password;
   const match = await bcrypt.compare(res.send(password, hashed));
+  await client.end();
   if (match) {
     res.send("OK");
     return;
