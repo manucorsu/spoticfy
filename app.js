@@ -1,13 +1,15 @@
 import express from "express";
-import { config } from "./dbconfig.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import pkg from "pg";
 import cors from "cors";
-import bcrypt from "bcryptjs";
+
+import { config } from "./dbconfig.js";
 
 const app = express();
 const PORT = 8000;
 const { Client } = pkg;
-const client = new Client(config);
+const jwtkey = "clavesupersegurajwt"; ///???
 
 app.use(express.json());
 app.use(cors());
@@ -20,69 +22,56 @@ app.get("/", (req, res) => {
   res.send(`API 🆗`);
 });
 
-app.get("/canciones/:searchTxt", async (req, res) => {
-  try {
-    const searchTxt = req.params.searchTxt;
-    let qry = `
-    SELECT public.canciones.id, public.canciones.nombre, 
-    public.artistas.nombre AS artista, public.albumes.nombre AS album,
-    public.canciones.duracion, public.canciones.reproducciones
-    
-    FROM public.canciones
-    
-    JOIN public.albumes ON public.canciones.album = public.albumes.id
-    JOIN public.artistas ON public.albumes.artista = public.artistas.id
-    `; //flashbacks de tp4
-    if (searchTxt != "*") {
-      qry += ` WHERE public.canciones.nombre = '${searchTxt}';`;
-    }
-    await client.connect();
-    const result = await client.query(qry);
-    await client.end();
-    res.send(result.rows);
-  } catch (ex) {
-    console.error(ex);
-  }
+app.get("/canciones", async (req, res) => {
+  const client = new Client(config);
+  await client.connect();
+  let result = await client.query("select * from public.canciones");
+  await client.end();
+  console.log(result.rows);
+  res.send(result.rows);
 });
 
-app.get("/albumes/:searchTxt", async (req, res) => {
-  try {
-    const searchTxt = req.params.searchTxt;
-    let qry = `
-    SELECT public.albumes.id, public.albumes.nombre, public.artistas.nombre AS artista 
-    FROM public.albumes 
-    JOIN public.artistas ON public.artistas.id = public.albumes.artista
-    `;
-    if (searchTxt != "*") {
-      qry += ` WHERE public.albumes.nombre = '${searchTxt}';`;
-    }
-    await client.connect();
-    const result = await client.query(qry);
-    await client.end();
-    res.send(result.rows);
-  } catch (ex) {
-    console.error(ex);
-  }
+app.post("/canciones", async (req, res) => {
+  const client = new Client(config);
+  await client.connect();
+  const cancion = req.body;
+  console.log("Cancion", cancion);
+
+  const result1 = await client.query("select max(id) from public.canciones");
+  const max_id = result1.rows[0].max;
+  console.log("max id", max_id);
+  const result2 = await client.query(
+    "insert into public.canciones(id,album, duracion, nombre) values ($1,$2,$3,$4)",
+    [max_id + 1, cancion.album, cancion.duracion, cancion.nombre]
+  );
+  await client.end();
+  res.status(200).json({ message: "Success!" });
 });
 
-app.get("/artistas/:searchTxt", async (req, res) => {
-  try {
-    const searchTxt = req.params.searchTxt;
-    let qry =
-      "SELECT public.artistas.id, public.artistas.nombre FROM public.artistas";
-    if (searchTxt != "*") {
-      qry += ` WHERE public.artistas.nombre = '${searchTxt}';`; //esto está mal había que usar $ y recién me entero.
-    }
-    await client.connect();
-    const result = await client.query(qry);
-    await client.end();
-    res.send(result.rows);
-  } catch (ex) {
-    console.error(ex);
-  }
+app.get("/artistas", async (req, res) => {
+  const client = new Client(config);
+  await client.connect();
+  let result = await client.query("select * from public.artistas");
+  await client.end();
+  console.log(result.rows);
+  res.send(result.rows);
+});
+
+app.get("/artistas/:id/canciones", async (req, res) => {
+  const client = new Client(config);
+  const { id } = req.params;
+  await client.connect();
+  let result = await client.query(
+    "select c.* from public.canciones c, public.albumes a where c.album = a.id and artista=$1",
+    [id]
+  );
+  await client.end();
+  console.log(result.rows);
+  res.send(result.rows);
 });
 
 app.post("/usuarios", async (req, res) => {
+  const client = new Client(config);
   await client.connect();
   const usuario = req.body;
   const hashed = await bcrypt.hash(usuario.password, 10);
@@ -97,20 +86,50 @@ app.post("/usuarios", async (req, res) => {
   res.send(result.rows);
 });
 
-app.post("/login/", async (req, res) => {
+app.get("/usuarios/canciones", async (req, res) => {
+  const client = new Client(config);
+  await client.connect();
+  console.log("req", req.headers);
+  const jwtoken = req.headers.authorization.slice(7);
+  console.log("jwt", jwtoken);
+  try {
+    const payload = await jwt.verify(jwtoken, jwtkey);
+    console.log("Desencriptado:", payload);
+    let result = await client.query("select * from favoritos where userid=$1", [
+      payload.userid,
+    ]);
+    res.send(result.rows);
+  } catch (e) {
+    console.log("error jwt", e);
+    res.send("Error jwt");
+  }
+
+  await client.end();
+});
+
+app.post("/login", async (req, res) => {
+  const client = new Client(config);
   await client.connect();
   const { userid, password } = req.body;
+
   let result = await client.query("select * from usuarios where userid=$1", [
     userid,
   ]);
+  console.log(result.rows[0]);
   const usuario_db = result.rows[0];
   const hashed = usuario_db.password;
-  const match = await bcrypt.compare(res.send(password, hashed));
+
+  const match = await bcrypt.compare(password, hashed);
   await client.end();
+
   if (match) {
-    res.send("OK");
+    const token = jwt.sign({ userid: usuario_db.userid }, jwtkey);
+    res.send({
+      nombre: usuario_db.nombre,
+      email: usuario_db.email,
+      token: token,
+    });
     return;
-  } else {
-    res.send("Los datos ingresados contienen un error.");
   }
+  res.send("Inexistente");
 });
