@@ -5,6 +5,81 @@ import pkg from "pg";
 import cors from "cors";
 
 import { config } from "./dbconfig.js";
+import { DataTypes } from "sequelize";
+const sequelize = new Sequelize(process.env.POSTGRES_URL);
+try {
+  await sequelize.authenticate();
+} catch (err) {
+  console.error(err.message);
+  await sequelize.close();
+}
+
+class Album extends Model {}
+Album.init({
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  nombre: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+});
+
+class Artista extends Model {}
+Artista.init({
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  nombre: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+});
+
+class Cancion extends Model {}
+Cancion.init({
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  duracion: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  reproducciones: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  nombre: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+});
+
+class Usuario extends Model {}
+Usuario.init({
+  userid: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  nombre: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+});
 
 const app = express();
 const PORT = 8000;
@@ -40,10 +115,12 @@ app.post("/canciones", async (req, res) => {
   const result1 = await client.query("select max(id) from public.canciones");
   const max_id = result1.rows[0].max;
   console.log("max id", max_id);
-  const result2 = await client.query(
-    "insert into public.canciones(id,album, duracion, nombre) values ($1,$2,$3,$4)",
-    [max_id + 1, cancion.album, cancion.duracion, cancion.nombre]
-  );
+  const result2 = await client.query("insert into public.canciones(id,album, duracion, nombre) values ($1,$2,$3,$4)", [
+    max_id + 1,
+    cancion.album,
+    cancion.duracion,
+    cancion.nombre,
+  ]);
   await client.end();
   res.status(200).json({ message: "Success!" });
 });
@@ -77,10 +154,12 @@ app.post("/usuarios", async (req, res) => {
   const hashed = await bcrypt.hash(usuario.password, 10);
   console.log("usuario", usuario);
   console.log("hashed", hashed);
-  let result = await client.query(
-    "insert into usuarios(userid, email, nombre, password) values($1, $2, $3, $4)",
-    [usuario.userid, usuario.email, usuario.nombre, hashed]
-  );
+  let result = await client.query("insert into usuarios(userid, email, nombre, password) values($1, $2, $3, $4)", [
+    usuario.userid,
+    usuario.email,
+    usuario.nombre,
+    hashed,
+  ]);
   await client.end();
   console.log(result.rows);
   res.send(result.rows);
@@ -95,9 +174,7 @@ app.get("/usuarios/canciones", async (req, res) => {
   try {
     const payload = await jwt.verify(jwtoken, jwtkey);
     console.log("Desencriptado:", payload);
-    let result = await client.query("select * from favoritos where userid=$1", [
-      payload.userid,
-    ]);
+    let result = await client.query("select * from favoritos where userid=$1", [payload.userid]);
     res.send(result.rows);
   } catch (e) {
     console.log("error jwt", e);
@@ -112,9 +189,7 @@ app.post("/login", async (req, res) => {
   await client.connect();
   const { userid, password } = req.body;
 
-  let result = await client.query("select * from usuarios where userid=$1", [
-    userid,
-  ]);
+  let result = await client.query("select * from usuarios where userid=$1", [userid]);
   console.log(result.rows[0]);
   const usuario_db = result.rows[0];
   const hashed = usuario_db.password;
